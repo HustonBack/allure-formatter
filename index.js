@@ -1,5 +1,6 @@
 
 var Allure = require('allure-js-commons');
+var Runtime = require('allure-js-commons/runtime');
 var allure = new Allure();
 
 var currentSuite = {};
@@ -176,3 +177,4 @@ function CustomFormatter (options) {
 }
 
 module.exports = CustomFormatter;
+module.exports.runtime = new Runtime(allure);
