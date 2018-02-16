@@ -7,11 +7,23 @@ var currentSuite = {};
 var currentCase = {};
 var currentStep = {};
 var currentLocation = null;
-var currentStepIndex = null;
 var lastCaseLocation = null;
 
-function setCurrentStep (index){
-    return currentCase.steps[index];
+function setCurrentStep (data){
+    console.log(JSON.stringify(data));
+    if (data.gherkinKeyword){
+        return {
+            text : data.gherkinKeyword + data.pickleStep.text,
+            argument : data.pickleStep.arguments
+                ? data.pickleStep.arguments[0]
+                : null
+        }
+    } else {
+        return {
+            text : 'Hook',
+            arguments: null
+        }
+    }
 }
 
 function setCurrentCase(location) {
@@ -67,15 +79,6 @@ function mapStepArguments ( argument ) {
     )
 }
 
-function  updateScenarioOutlineSteps (step, currentStepData) {
-    step.text = currentStepData.gherkinKeyword + ' ' + currentStepData.pickleStep.text;
-    if (step.argument) {
-        step.argument = mapStepArguments(currentStepData.pickleStep.arguments[0]);
-    }
-
-    return step;
-}
-
 function setCurrentSuite(data) {
 
     var suite = {
@@ -87,17 +90,7 @@ function setCurrentSuite(data) {
                     type : item.type,
                     location : item.type === 'Scenario'
                         ? item.location.line
-                        : getScenarioOutlineLocations(item),
-                    steps : item.steps.map(
-                        function (step) {
-                            return {
-                                text : step.keyword + ' ' + step.text,
-                                argument: step.argument
-                                    ? mapStepArguments(step.argument)
-                                    : null
-                            }
-                        }
-                    )
+                        : getScenarioOutlineLocations(item)
                 }
             }
         )
@@ -123,11 +116,7 @@ function CustomFormatter (options) {
     });
 
     options.eventBroadcaster.on('test-step-started', function(data){
-        currentStepIndex = data.index;
-        currentStep = setCurrentStep(currentStepIndex);
-        if (currentCase.type === 'ScenarioOutline') {
-            currentStep = updateScenarioOutlineSteps(currentStep, options.eventDataCollector.getTestStepData(data))
-        }
+        currentStep = setCurrentStep(options.eventDataCollector.getTestStepData(data));
         allure.startStep(currentStep.text);
         if (currentStep.argument) {
             var rawTable = currentStep.argument;
