@@ -15,7 +15,7 @@ function setCurrentStep (data){
         return {
             text : data.gherkinKeyword + data.pickleStep.text,
             argument : data.pickleStep.arguments
-                ? data.pickleStep.arguments[0]
+                ? mapStepArguments(data.pickleStep.arguments[0])
                 : null
         }
     } else {
