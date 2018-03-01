@@ -16,7 +16,7 @@ function setCurrentStep (data){
         return {
             text : data.gherkinKeyword + data.pickleStep.text,
             argument : data.pickleStep.arguments
-                ? data.pickleStep.arguments[0]
+                ? mapStepArguments(data.pickleStep.arguments[0])
                 : null
         }
     } else {
@@ -98,6 +98,18 @@ function setCurrentSuite ( uri ) {
             return currentSuites[s];
         }
     }
+}
+
+function mapStepArguments ( argument ) {
+        return argument.rows.map(
+            function (raw) {
+                return raw.cells.map(
+                    function (cell) {
+                        return cell.value;
+                    }
+                )
+            }
+        )
 }
 
 function CustomFormatter (options) {
