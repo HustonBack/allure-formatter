@@ -68,18 +68,6 @@ function getScenarioOutlineLocations (item) {
     return locations;
 }
 
-// function mapStepArguments ( argument ) {
-//     return argument.rows.map(
-//         function (raw) {
-//             return raw.cells.map(
-//                 function (cell) {
-//                     return cell.value;
-//                 }
-//             )
-//         }
-//     )
-// }
-
 function setSuite(data) {
     var suite = {
         name : data.document.feature.name,
