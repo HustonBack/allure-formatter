@@ -3,14 +3,15 @@ var Allure = require('allure-js-commons');
 var Runtime = require('allure-js-commons/runtime');
 var allure = new Allure();
 
+var currentSuites = [];
 var currentSuite = {};
 var currentCase = {};
 var currentStep = {};
 var currentLocation = null;
 var lastCaseLocation = null;
+var activeSuite = false;
 
 function setCurrentStep (data){
-    console.log(JSON.stringify(data));
     if (data.gherkinKeyword){
         return {
             text : data.gherkinKeyword + data.pickleStep.text,
@@ -67,22 +68,22 @@ function getScenarioOutlineLocations (item) {
     return locations;
 }
 
-function mapStepArguments ( argument ) {
-    return argument.rows.map(
-        function (raw) {
-            return raw.cells.map(
-                function (cell) {
-                    return cell.value;
-                }
-            )
-        }
-    )
-}
+// function mapStepArguments ( argument ) {
+//     return argument.rows.map(
+//         function (raw) {
+//             return raw.cells.map(
+//                 function (cell) {
+//                     return cell.value;
+//                 }
+//             )
+//         }
+//     )
+// }
 
-function setCurrentSuite(data) {
-
+function setSuite(data) {
     var suite = {
         name : data.document.feature.name,
+        uri : data.uri,
         scenarios: data.document.feature.children.map(
             function (item) {
                 return {
@@ -102,15 +103,40 @@ function setCurrentSuite(data) {
     return suite;
 }
 
+function setCurrentSuite ( uri ) {
+    for (var s = 0; s < currentSuites.length; s++) {
+
+        if(currentSuites[s].uri === uri){
+            return currentSuites[s];
+        }
+    }
+}
+
 function CustomFormatter (options) {
 
     options.eventBroadcaster.on('gherkin-document', function(data){
-        currentSuite = setCurrentSuite(data);
-        allure.startSuite(currentSuite.name);
+        currentSuites.push(setSuite(data));
+    });
+
+    options.eventBroadcaster.on('test-run-finished', function () {
+        if(activeSuite){
+            allure.endSuite();
+        }
     });
 
     options.eventBroadcaster.on('test-case-started', function(data){
         currentLocation = data.sourceLocation.line;
+        if(data.sourceLocation.uri !== currentSuite.uri){
+            if (activeSuite) {
+                allure.endSuite();
+                activeSuite = false;
+            }
+
+            currentSuite = setCurrentSuite(data.sourceLocation.uri);
+            allure.startSuite(currentSuite.name);
+
+            activeSuite = true;
+        }
         currentCase = setCurrentCase(currentLocation);
         allure.startCase(currentCase.name);
     });
@@ -158,11 +184,7 @@ function CustomFormatter (options) {
         } else {
             allure.endCase(data.result.status);
         }
-        if (currentLocation === lastCaseLocation) {
-            allure.endSuite()
-        }
     });
-
 }
 
 module.exports = CustomFormatter;
